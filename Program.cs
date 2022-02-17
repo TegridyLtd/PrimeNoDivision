@@ -1,7 +1,13 @@
-﻿using System;
-using System.Linq;
-using System.Collections;
-using System.Collections.Generic;
+﻿/////////////////////////////////////////////////////////////////////////////
+// Copyright (C) 2022 Tegridy Ltd                                          //
+// Author: Darren Braviner                                                 //
+// Contact: db@tegridygames.co.uk                                          //
+/////////////////////////////////////////////////////////////////////////////
+//                                                                         //
+// This program is free for academic use.                                  //
+//                                                                         //
+/////////////////////////////////////////////////////////////////////////////
+using System;
 using System.IO;
 namespace PrimeHunter
 {
@@ -16,10 +22,113 @@ namespace PrimeHunter
         public static Primes[] primes;
         static void Main(string[] args)
         {
-            primes = LoadPrimes("primes.txt");
-            DisplayStartingCounts(primes);
-            CalculateNext(primes, 10000);
+            string loadPath = "Primes.txt";
+            string savePath = "NewPrimes.txt";
+            int maxNum = 10000;
+            bool saveCounts = false;
+
+            if (args.Length == 4)
+            {
+                loadPath = args[0];
+                savePath = args[1];
+                maxNum = int.Parse(args[2]);
+                saveCounts = bool.Parse(args[3]);
+            }
+
+            primes = LoadPrimes(loadPath);
+            primes = CalculateUpto(primes, maxNum);
+            SavePrimeList(primes, saveCounts, savePath);
         }
+
+        static void CalculateStartCount(Primes[] list)
+        {
+            Console.WriteLine("List length = " + list.Length);
+            for (int i = 0; i < list.Length; i++)
+            {
+                int count = 0;
+                list[i].count = 0;
+                while (count <= list[list.Length - 1].prime -1)
+                {
+                    count++;
+                    list[i].count++;
+                    if (list[i].count == list[i].prime)
+                    {
+                        list[i].count = 0;
+                    }
+                }
+            }
+        }
+        static Primes[] CalculateUpto(Primes[] list, int maxNum)
+        {
+            int count = list[list.Length - 1].prime;
+            while (count != maxNum)
+            {
+                //Increase the counts for all known primes & check if we are at a division point
+                count++;
+                bool foundPos = true;
+                for (int i = 0; i < list.Length; i++)
+                {
+                    list[i].count++;
+                    if (list[i].count == list[i].prime)
+                    {
+                        list[i].count = 0;
+                        foundPos = false;
+                    }
+                }
+
+                //If we have found a possible match add it to the array so we don't miss it on the next pass
+                if (foundPos)
+                {
+                    Primes newPrime = new Primes();
+                    newPrime.prime = count;
+                    newPrime.count = 0;
+                    Array.Resize(ref list, list.Length + 1);
+                    list[list.Length - 1] = newPrime;
+                }
+            }
+            Console.WriteLine("Found " + (list.Length - primes.Length).ToString() + " new primes betwen 0 and " + maxNum);
+            return list;
+        }
+        static void DisplayStartingCounts(Primes[] list)
+        {
+            //For debug, displays the starting count for prime in the array.
+            for (int i = 0; i < list.Length; i++)
+            {
+                    Console.WriteLine(list[i].prime + " Starts at count " + list[i].count);
+            }
+        }
+        static void DisplayAllPrimeTotals()
+        {
+            //Displays the total of all the numbers in the prime added until only one remains
+            for (int i = 0; i < primes.Length; i++)
+            {
+                Console.WriteLine("Prime = " + primes[i] + " Character Total = " + CharacterTotal(primes[i].prime));
+            }
+        }
+        static int CharacterTotal(int check)
+        {
+            //Add the digits up until we are left with only one
+            while (check.ToString().Length > 1)
+            {
+                string toSplit = check.ToString();
+                check = 0;
+                for (int i = 0; i < toSplit.Length; i++)
+                {
+                    check += toSplit[i] - '0';
+                }
+            }
+            return check;
+        }
+        static bool ThreeSixNine(int test)
+        {
+            //Check if divisible by 3/6/9. if returns nine numnber will always be divisible by 9. 3 or 6 and its a multiple of 3 or 6.
+            int check = CharacterTotal(test);
+            if (check == 3 || check == 6 || check == 9) return false;
+            else return true;
+        }
+
+        ////////////////////////////////////////////////////////////////////////////////
+        /// Save/Load Functions
         static Primes[] LoadPrimes(string filePath)
         {
             //see if we have any existing data
@@ -50,99 +159,48 @@ namespace PrimeHunter
                     for (int i = 0; i < currentPrimes.Length; i++)
                     {
                         newPrimes[i] = new Primes();
-                        newPrimes[i].prime = int.Parse(currentPrimes[i]);   
+                        newPrimes[i].prime = int.Parse(currentPrimes[i]);
                     }
                     Console.WriteLine("Found " + newPrimes.Length + " previous primes, Calculating starting Counts");
                     CalculateStartCount(newPrimes);
                     return newPrimes;
                 }
             }
-            else return null;
-        }
-        static void CalculateStartCount(Primes[] list)
-        {
-            Console.WriteLine("List length = " + list.Length);
-
-            for (int i = 0; i < list.Length; i++)
+            else
             {
-                int count = 0;
-                list[i].count = 0;
-                while (count <= list[list.Length - 1].prime -1)
-                {
-                    count++;
-                    list[i].count++;
-                    if (list[i].count == list[i].prime)
-                    {
-                        Console.WriteLine(count + " is divisible by " + list[i].prime + " Count = " + list[i].count);
-                        list[i].count = 0;
-                    }
-                }
+                Primes[] newPrimes = new Primes[2];
+                newPrimes[0] = new Primes();
+                newPrimes[0].prime = 2;
+                newPrimes[0].count = 1;
+
+                newPrimes[1] = new Primes();
+                newPrimes[1].prime = 3;
+                newPrimes[1].count = 0;
+                Console.WriteLine("No data found using default starting numbers");
+                return newPrimes;
             }
         }
-        static void CalculateNext(Primes[] list, int maxNum)
+        static void SavePrimeList(Primes[] list, bool withCounts, string path)
         {
-            int count = list[list.Length - 1].prime;
-            while (count != maxNum)
+            string[] saveData = new string[list.Length];
+
+            if (withCounts)
             {
-                count++;
-                bool foundPos = true;
+                //write save data including the counts
                 for (int i = 0; i < list.Length; i++)
                 {
-                    list[i].count++;
-                    if (list[i].count == list[i].prime)
-                    {
-                        Console.WriteLine(count + " is divisible by " + list[i].prime + " Count = " + list[i].count);
-                        list[i].count = 0;
-                        foundPos = false;
-                    }
+                    saveData[i] = list[i].prime.ToString() + "," + list[i].count.ToString();
                 }
-                if (foundPos)
+            }
+            else
+            {
+                //write save data without counts
+                for (int i = 0; i < list.Length; i++)
                 {
-                    Primes newPrime = new Primes();
-                    newPrime.prime = count;
-                    newPrime.count = count;
-                    Array.Resize(ref list, list.Length + 1);
-                    list[list.Length - 1] = newPrime;
-                    Console.WriteLine("Found possible prime at " + count);
+                    saveData[i] = list[i].prime.ToString();
                 }
             }
-
-
-        }
-        static void DisplayStartingCounts(Primes[] list)
-        {
-            for (int i = 0; i < list.Length; i++)
-            {
-                    Console.WriteLine(list[i].prime + " Starts at count " + list[i].count);
-            }
-        }
-        static void DisplayAllPrimeTotals()
-        {
-            for (int i = 0; i < primes.Length; i++)
-            {
-                Console.WriteLine("Number = " + primes[i] + " Total = " + CharacterTotal(primes[i].prime));
-            }
-        }
-        static int CharacterTotal(int check)
-        {
-            //Add the digits up until we are left with only one
-            while (check.ToString().Length > 1)
-            {
-                string toSplit = check.ToString();
-                check = 0;
-                for (int i = 0; i < toSplit.Length; i++)
-                {
-                    check += toSplit[i] - '0';
-                }
-            }
-            return check;
-        }
-        static bool ThreeSixNine(int test)
-        {
-            //Check if divisible by 3/6/9
-            int check = CharacterTotal(test);
-            if (check == 3 || check == 6 || check == 9) return false;
-            else return true;
+            File.WriteAllLines(path, saveData);
         }
     }
 }
