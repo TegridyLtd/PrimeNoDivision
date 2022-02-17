@@ -8,13 +8,14 @@
 //                                                                         //
 /////////////////////////////////////////////////////////////////////////////
 using System;
+using System.Numerics;
 using System.IO;
 namespace PrimeHunter
 {
     public class Primes
     {
-        public int prime = 0;
-        public int count = 0;
+        public BigInteger prime = 0;
+        public BigInteger count = 0;
     }
 
     class Program
@@ -24,14 +25,14 @@ namespace PrimeHunter
         {
             string loadPath = "Primes.txt";
             string savePath = "NewPrimes.txt";
-            int maxNum = 10000;
+            BigInteger maxNum = 10000;
             bool saveCounts = false;
 
             if (args.Length == 4)
             {
                 loadPath = args[0];
                 savePath = args[1];
-                maxNum = int.Parse(args[2]);
+                maxNum = BigInteger.Parse(args[2]);
                 saveCounts = bool.Parse(args[3]);
             }
 
@@ -45,7 +46,7 @@ namespace PrimeHunter
             Console.WriteLine("List length = " + list.Length);
             for (int i = 0; i < list.Length; i++)
             {
-                int count = 0;
+                BigInteger count = 0;
                 list[i].count = 0;
                 while (count <= list[list.Length - 1].prime -1)
                 {
@@ -58,9 +59,9 @@ namespace PrimeHunter
                 }
             }
         }
-        static Primes[] CalculateUpto(Primes[] list, int maxNum)
+        static Primes[] CalculateUpto(Primes[] list, BigInteger maxNum)
         {
-            int count = list[list.Length - 1].prime;
+            BigInteger count = list[list.Length - 1].prime;
             while (count != maxNum)
             {
                 //Increase the counts for all known primes & check if we are at a division point
@@ -105,19 +106,19 @@ namespace PrimeHunter
                 Console.WriteLine("Prime = " + primes[i] + " Character Total = " + CharacterTotal(primes[i].prime));
             }
         }
-        static int CharacterTotal(int check)
+        static int CharacterTotal(BigInteger check)
         {
             //Add the digits up until we are left with only one
+            int total = 0;
             while (check.ToString().Length > 1)
             {
                 string toSplit = check.ToString();
-                check = 0;
                 for (int i = 0; i < toSplit.Length; i++)
                 {
-                    check += toSplit[i] - '0';
+                    total += toSplit[i] - '0';
                 }
             }
-            return check;
+            return total;
         }
         static bool ThreeSixNine(int test)
         {
@@ -146,8 +147,8 @@ namespace PrimeHunter
                     {
                         splitPrimes = currentPrimes[i].Split(',');
                         newPrimes[i] = new Primes();
-                        newPrimes[i].prime = int.Parse(splitPrimes[0]);
-                        newPrimes[i].count = int.Parse(splitPrimes[1]);
+                        newPrimes[i].prime = BigInteger.Parse(splitPrimes[0]);
+                        newPrimes[i].count = BigInteger.Parse(splitPrimes[1]);
                     }
                     Console.WriteLine("Found " + newPrimes.Length + " previous primes with counts");
                     return newPrimes;
@@ -159,7 +160,7 @@ namespace PrimeHunter
                     for (int i = 0; i < currentPrimes.Length; i++)
                     {
                         newPrimes[i] = new Primes();
-                        newPrimes[i].prime = int.Parse(currentPrimes[i]);
+                        newPrimes[i].prime = BigInteger.Parse(currentPrimes[i]);
                     }
                     Console.WriteLine("Found " + newPrimes.Length + " previous primes, Calculating starting Counts");
                     CalculateStartCount(newPrimes);
